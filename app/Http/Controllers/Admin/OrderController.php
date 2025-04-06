@@ -10,6 +10,7 @@ use RealRashid\SweetAlert\Facades\Alert;
 use App\Models\Order;
 use App\Models\User;
 use App\Models\Unique;
+use Illuminate\Support\Facades\DB;
 use App\DataTables\OrderDataTable;
 use App\Helpers\Media;
 
@@ -47,6 +48,62 @@ class OrderController extends Controller
     {
         return $dataTable->render($this->view . 'index');
     }
+
+    public function orderStats(Request $request)
+    {
+        $range = $request->get('range', 'year');
+
+        if ($range === 'month') {
+            $startDate = now()->startOfMonth();
+            $endDate = now()->endOfMonth();
+        } elseif ($range === 'week') {
+            $startDate = now()->startOfWeek();
+            $endDate = now()->endOfWeek();
+        } else {
+            $startDate = now()->startOfYear();
+            $endDate = now()->endOfYear();
+        }
+
+        if ($range === 'year') {
+            $orders = Order::select(
+                    DB::raw('MONTH(created_at) as month'),
+                    DB::raw('COUNT(*) as total')
+                )
+                ->whereBetween('created_at', [$startDate, $endDate])
+                ->groupBy('month')
+                ->orderBy('month')
+                ->get();
+
+            $labels = $orders->pluck('month')->map(function ($month) {
+                return \Carbon\Carbon::create()->month($month)->format('F'); 
+            });
+
+            $data = $orders->pluck('total')->map(function ($value) {
+                return (int) $value;
+            });
+        } else {
+            $orders = Order::selectRaw('DATE(created_at) as date, COUNT(*) as total')
+                ->whereBetween('created_at', [$startDate, $endDate])
+                ->groupBy('date')
+                ->orderBy('date')
+                ->get();
+
+            $labels = $orders->pluck('date')->map(function ($date) {
+                return \Carbon\Carbon::parse($date)->format('d M');
+            });
+
+            $data = $orders->pluck('total')->map(function ($value) {
+                return (int) $value;
+            });
+        }
+
+        return response()->json([
+            'labels' => $labels,
+            'data' => $data
+        ]);
+    }
+
+
 
     /**
      * Show the form for creating a new resource.
