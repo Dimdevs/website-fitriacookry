@@ -141,28 +141,20 @@ class OrderController extends Controller
     
         $input = $request->all();
     
-        // Handle file upload for proof_transfer
-        if ($request->hasFile('proof_transfer')) {
-            $existingOrder = $this->model->find($id);
+        // if ($request->hasFile('proof_transfer')) {
+        //     $existingOrder = $this->model->find($id);
+        //     if ($existingOrder && $existingOrder->proof_transfer) {
+        //         $this->removeImage($existingOrder->proof_transfer, $this->path);
+        //     }
+        //     $uploadedFile = $this->uploads($request->file('proof_transfer'), $this->path);
+        //     if (isset($uploadedFile['filePath'])) {
+        //         $input['proof_transfer'] = asset('storage/' . $uploadedFile['filePath']);
+        //     } else {
+        //         Alert::error('Error', 'File upload failed');
+        //         return back()->withInput();
+        //     }
+        // }
     
-            // Remove the old file if it exists
-            if ($existingOrder && $existingOrder->proof_transfer) {
-                $this->removeImage($existingOrder->proof_transfer, $this->path);
-            }
-    
-            // Upload the new file
-            $uploadedFile = $this->uploads($request->file('proof_transfer'), $this->path);
-    
-            // Ensure the file path is properly prefixed with the storage URL
-            if (isset($uploadedFile['filePath'])) {
-                $input['proof_transfer'] = asset('storage/' . $uploadedFile['filePath']);
-            } else {
-                Alert::error('Error', 'File upload failed');
-                return back()->withInput();
-            }
-        }
-    
-        // Update the order data
         $result = $this->model->where('id', $id)->update([
             'name' => $input['name'],
             'shipping_price' => $input['shipping_price'],
@@ -174,7 +166,7 @@ class OrderController extends Controller
             'total_price' => $input['total_price'],
             'address' => $input['address'],
             'status' => $input['status'],
-            'proof_transfer' => $input['proof_transfer'] ?? null, // Update proof_transfer if available
+            // 'proof_transfer' => $input['proof_transfer'] ?? null, 
         ]);
     
         if ($result) {
